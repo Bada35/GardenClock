@@ -8,116 +8,24 @@ const ALL_SIDES = [
 ];
 
 const NUMBER_TO_CLASSES = {
-    0: {
-        top: [
-          'digit-square-border-top',
-          'digit-square-border-left',
-          'digit-square-border-right',
-        ],
-        bottom: [
-          'digit-square-border-bottom',
-          'digit-square-border-left',
-          'digit-square-border-right',
-        ],
-      },
-      1: {
-        top: ['digit-square-border-right'],
-        bottom: ['digit-square-border-right'],
-      },
-      2: {
-        top: [
-          'digit-square-border-top',
-          'digit-square-border-right',
-          'digit-square-border-bottom',
-        ],
-        bottom: [
-          'digit-square-border-top',
-          'digit-square-border-left',
-          'digit-square-border-bottom',
-        ],
-      },
-      3: {
-        top: [
-          'digit-square-border-top',
-          'digit-square-border-right',
-          'digit-square-border-bottom',
-        ],
-        bottom: [
-          'digit-square-border-top',
-          'digit-square-border-right',
-          'digit-square-border-bottom',
-        ],
-      },
-      4: {
-        top: [
-          'digit-square-border-left',
-          'digit-square-border-right',
-          'digit-square-border-bottom',
-        ],
-        bottom: [
-          'digit-square-border-right',
-          'digit-square-border-top',
-        ],
-      },
-      5: {
-        top: [
-          'digit-square-border-top',
-          'digit-square-border-left',
-          'digit-square-border-bottom',
-        ],
-        bottom: [
-          'digit-square-border-top',
-          'digit-square-border-right',
-          'digit-square-border-bottom',
-        ],
-      },
-      6: {
-        top: [
-          'digit-square-border-top',
-          'digit-square-border-left',
-          'digit-square-border-bottom',
-        ],
-        bottom: ALL_SIDES,
-      },
-      7: {
-        top: [
-          'digit-square-border-top',
-          'digit-square-border-right',
-        ],
-        bottom: ['digit-square-border-right'],
-      },
-      8: {
-        top: ALL_SIDES,
-        bottom: ALL_SIDES,
-      },
-      9: {
-        top: ALL_SIDES,
-        bottom: [
-          'digit-square-border-top',
-          'digit-square-border-right',
-          'digit-square-border-bottom',
-        ],
-      },
+  0: { top: ['digit-square-border-top', 'digit-square-border-left', 'digit-square-border-right'], bottom: ['digit-square-border-bottom', 'digit-square-border-left', 'digit-square-border-right'] },
+  1: { top: ['digit-square-border-right'], bottom: ['digit-square-border-right'] },
+  2: { top: ['digit-square-border-top', 'digit-square-border-right', 'digit-square-border-bottom'], bottom: ['digit-square-border-top', 'digit-square-border-left', 'digit-square-border-bottom'] },
+  3: { top: ['digit-square-border-top', 'digit-square-border-right', 'digit-square-border-bottom'], bottom: ['digit-square-border-top', 'digit-square-border-right', 'digit-square-border-bottom'] },
+  4: { top: ['digit-square-border-left', 'digit-square-border-right', 'digit-square-border-bottom'], bottom: ['digit-square-border-right', 'digit-square-border-top'] },
+  5: { top: ['digit-square-border-top', 'digit-square-border-left', 'digit-square-border-bottom'], bottom: ['digit-square-border-top', 'digit-square-border-right', 'digit-square-border-bottom'] },
+  6: { top: ['digit-square-border-top', 'digit-square-border-left', 'digit-square-border-bottom'], bottom: ALL_SIDES },
+  7: { top: ['digit-square-border-top', 'digit-square-border-right'], bottom: ['digit-square-border-right'] },
+  8: { top: ALL_SIDES, bottom: ALL_SIDES },
+  9: { top: ALL_SIDES, bottom: ['digit-square-border-top', 'digit-square-border-right', 'digit-square-border-bottom'] },
 };
 
 function Digit({ number }) {
   const { top, bottom } = NUMBER_TO_CLASSES[number];
   return (
     <div>
-      <div
-        className={[
-          'digit-square',
-          'digit-square-top',
-          ...top,
-        ].join(' ')}
-      />
-      <div
-        className={[
-          'digit-square',
-          'digit-square-bottom',
-          ...bottom,
-        ].join(' ')}
-      />
+      <div className={['digit-square', 'digit-square-top', ...top].join(' ')} />
+      <div className={['digit-square', 'digit-square-bottom', ...bottom].join(' ')} />
     </div>
   );
 }
@@ -131,48 +39,47 @@ function Separator() {
   );
 }
 
-function useCurrentDate() {
-  const [date, setDate] = useState(new Date());
+// 생체 시계에서 하루를 25시간으로 나누기 위해 사용되는 시간 변환 함수
+function convertToBioClockTime(elapsedRealSeconds) {
+  const bioSeconds = elapsedRealSeconds / (86400 / (25 * 3600));
+  const bioHours = Math.floor(bioSeconds / 3600) % 25;
+  const bioMinutes = Math.floor((bioSeconds % 3600) / 60);
+  const bioSecondsOnly = Math.floor(bioSeconds % 60);
 
-  useEffect(() => {
-    const timer = window.setInterval(() => {
-      setDate(new Date());
-    }, 100);
-
-    return () => {
-      window.clearInterval(timer);
-    };
-  }, []);
-
-  return date;
+  return { bioHours, bioMinutes, bioSeconds: bioSecondsOnly };
 }
 
-function padTwoDigit(number) {
-  return number >= 10 ? String(number) : `0${number}`;
+function useBioClockTime() {
+  const [bioTime, setBioTime] = useState(() => convertToBioClockTime(0));
+
+  useEffect(() => {
+    const startTime = new Date().getTime();
+
+    const timer = setInterval(() => {
+      const currentTime = new Date().getTime();
+      const elapsedRealSeconds = (currentTime - startTime) / 1000;
+      setBioTime(convertToBioClockTime(elapsedRealSeconds));
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
+
+  return bioTime;
 }
 
 export default function Clock() {
-  const date = useCurrentDate();
-
-  let hours = date.getHours() % 12;
-  hours = hours === 0 ? 12 : hours;
-  const minutes = date.getMinutes();
-  const seconds = date.getSeconds();
-
-  const dateTimeDisplay = `${padTwoDigit(
-    date.getHours(),
-  )}:${padTwoDigit(minutes)}:${padTwoDigit(seconds)}`;
+  const { bioHours, bioMinutes, bioSeconds } = useBioClockTime();
 
   return (
-    <time className="clock" dateTime={dateTimeDisplay}>
-      <Digit number={parseInt(hours / 10, 10)} />
-      <Digit number={hours % 10} />
+    <time className="clock">
+      <Digit number={Math.floor(bioHours / 10)} />
+      <Digit number={bioHours % 10} />
       <Separator />
-      <Digit number={parseInt(minutes / 10, 10)} />
-      <Digit number={minutes % 10} />
+      <Digit number={Math.floor(bioMinutes / 10)} />
+      <Digit number={bioMinutes % 10} />
       <Separator />
-      <Digit number={parseInt(seconds / 10, 10)} />
-      <Digit number={seconds % 10} />
+      <Digit number={Math.floor(bioSeconds / 10)} />
+      <Digit number={bioSeconds % 10} />
     </time>
   );
 }
