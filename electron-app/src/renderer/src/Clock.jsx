@@ -50,14 +50,18 @@ function convertToBioClockTime(elapsedRealSeconds) {
 }
 
 function useBioClockTime() {
-  const [bioTime, setBioTime] = useState(() => convertToBioClockTime(0));
+  const [bioTime, setBioTime] = useState(() => {
+    const now = new Date();
+    const elapsedRealSeconds =
+      (now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds());
+    return convertToBioClockTime(elapsedRealSeconds);
+  });
 
   useEffect(() => {
-    const startTime = new Date().getTime();
-
     const timer = setInterval(() => {
-      const currentTime = new Date().getTime();
-      const elapsedRealSeconds = (currentTime - startTime) / 1000;
+      const now = new Date();
+      const elapsedRealSeconds =
+        (now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds());
       setBioTime(convertToBioClockTime(elapsedRealSeconds));
     }, 1000);
 
